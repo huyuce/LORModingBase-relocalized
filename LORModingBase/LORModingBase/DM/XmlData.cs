@@ -30,7 +30,10 @@ namespace LORModingBase.DM
         /// <param name="xmlPath">xml file path to load</param>
         public XmlData(string xmlPath)
         {
-            if(xmlPath.Contains(".txt") || xmlPath.Contains(".xml"))
+            // 如果是单个文件，且扩展名是 .txt 或 .xml
+            if (File.Exists(xmlPath) &&
+                (xmlPath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) ||
+                 xmlPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)))
             {
                 this.currentXmlFilePaths.Add(xmlPath);
 
@@ -38,8 +41,18 @@ namespace LORModingBase.DM
                 XML_DOC.Load(xmlPath);
                 rootDataNode = LoadNodeData(XML_DOC.DocumentElement);
             }
-            else
-                LoadFromXmlFilePaths(Directory.GetFiles(xmlPath).ToList());
+            // 如果是目录，则从目录中加载多个文件
+            else if (Directory.Exists(xmlPath))
+            {
+                var files = Directory
+                    .GetFiles(xmlPath, "*", SearchOption.AllDirectories)
+                    .Where(p =>
+                        p.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) ||
+                        p.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                LoadFromXmlFilePaths(files);
+            }
         }
 
         /// <summary>
@@ -57,20 +70,61 @@ namespace LORModingBase.DM
         /// <param name="xmlFilePaths">Multiple xml file path list</param>
         private void LoadFromXmlFilePaths(List<string> xmlFilePaths)
         {
-            this.currentXmlFilePaths = xmlFilePaths;
-            if (xmlFilePaths.Count > 0)
-            {
-                XmlDocument XML_DOC = new XmlDocument();
-                XML_DOC.Load(xmlFilePaths[0]);
-                rootDataNode = LoadNodeData(XML_DOC.DocumentElement);
+            if (xmlFilePaths == null)
+                return;
 
-                xmlFilePaths.Skip(1).ForEachSafe((string xmlPath) =>
+            // 🔹 只保留扩展名为 .xml 或 .txt 的文件
+            xmlFilePaths = xmlFilePaths
+                .Where(p =>
+                    p.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) ||
+                    p.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            this.currentXmlFilePaths = xmlFilePaths;
+
+            if (xmlFilePaths.Count == 0)
+                return;
+
+            XmlDocument XML_DOC = new XmlDocument();
+
+            // 🔹 找到第一个能正确加载的文件作为 root
+            XmlDataNode root = null;
+            foreach (var firstFile in xmlFilePaths)
+            {
+                try
+                {
+                    XML_DOC.Load(firstFile);
+                    root = LoadNodeData(XML_DOC.DocumentElement);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[XmlData] 跳过无法解析的文件（作为根）：{firstFile} - {ex.Message}");
+                }
+            }
+
+            if (root == null)
+                return; // 一个都读不进去，就直接返回
+
+            rootDataNode = root;
+
+            // 🔹 其它文件追加 subNodes，读取失败就跳过，不让整个过程炸掉
+            xmlFilePaths.Skip(1).ForEachSafe((string xmlPath) =>
+            {
+                try
                 {
                     XmlDocument XML_DOC_SUB = new XmlDocument();
                     XML_DOC_SUB.Load(xmlPath);
-                    rootDataNode.subNodes.AddRange(LoadNodeData(XML_DOC_SUB.DocumentElement).subNodes);
-                });
-            }
+                    rootDataNode.subNodes.AddRange(
+                        LoadNodeData(XML_DOC_SUB.DocumentElement).subNodes);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[XmlData] 跳过无法解析的文件：{xmlPath} - {ex.Message}");
+                }
+            });
         }
 
 

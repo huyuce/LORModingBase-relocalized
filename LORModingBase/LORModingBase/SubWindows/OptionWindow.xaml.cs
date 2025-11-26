@@ -143,5 +143,10 @@ namespace LORModingBase.SubWindows
                 Tools.MessageBoxTools.ShowErrorMessageBox(ex, "Error");
             }
         }
+
+        private void TbxLORPath_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
     }
 }

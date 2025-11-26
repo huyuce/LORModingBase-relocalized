@@ -103,7 +103,7 @@ namespace LORModingBase.DM
         /// Change working direcotry with given mode name
         /// </summary>
         /// <param name="modeName">Mode name to use</param>
-        public static void ChangeWorkingDirectory(string modeName)
+        public static void ChangeWorkingDirectory(string modeName)//更改工作目录
         {
             if (DM.Config.config.isDirectBaseModeExport)
                 CurrentWorkingDirectory = $"{DM.Config.config.LORFolderPath}\\LibraryOfRuina_Data\\BaseMods\\{modeName}";

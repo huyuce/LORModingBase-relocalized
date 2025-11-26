@@ -115,13 +115,13 @@ namespace LORModingBase.DM
         /// </summary>
         /// <param name="languageID">Localize ID</param>
         /// <param name="args">String format param</param>
-        public static void MakeCautionMessage(string languageID, params object[] args)
+        public static void MakeCautionMessage(string languageID, params object[] args)//此为警告信息
         {
             string CAUTION = DM.LocalizeCore.GetLanguageData(DM.LANGUAGE_FILE_NAME.LOGGING, $"Caution");
             LOG_DATA += $"[-][{CAUTION}] {String.Format(DM.LocalizeCore.GetLanguageData(DM.LANGUAGE_FILE_NAME.LOGGING, languageID), args)}\n";
         }
 
-        public static void CheckDatasBySyntaxCheckStrings(string menunName, string referencePath, XmlDataNode rootDataNode, List<string> checkSyntaxStrings, bool isCritical = true)
+        public static void CheckDatasBySyntaxCheckStrings(string menunName, string referencePath, XmlDataNode rootDataNode, List<string> checkSyntaxStrings, bool isCritical = true)//创建数据检查通过语法字符串
         {
             string REFERENCE_TEXT = "NO ID";
             if (referencePath.Contains('$'))
